@@ -21,8 +21,8 @@ def receive_data():
     while True:
         data = 0
         cnt += 1
-        # data = ser.readline().decode('utf-8').strip()
-        data = ser.read_until(b'\n').decode('utf-8').strip()
+        data = ser.readline().decode('utf-8').strip()
+        # data = ser.read_until(b'\n').decode('utf-8').strip()
         print(f"Received: {data}")
         # print(f"{cnt}Received: {data}")
         # if ser.in_waiting > 0:
