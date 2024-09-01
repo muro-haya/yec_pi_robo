@@ -1,73 +1,137 @@
-# gui_display_three_numbers.py
-
-import tkinter as tk
-from tkinter import messagebox
+import cv2
+import numpy as np
 from datetime import datetime
 
-class TimeDisplayApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Logging Display")
-        
-        # Initialize variables to store three numbers
-        self.numbers = [[None, None], [None, None], [None, None]]
+# Initialize parameters
+y_axis_val = 0
 
-        # Create labels for displaying the numbers and time
-        self.label = tk.Label(root, font=('Helvetica', 16))
-        self.label.pack(pady=20)
+# List to store input values
+global input_val
+global joined_val
+global joined_val_index
+global joined_val_index_max
 
-        # Create labels and entry widgets for three numbers
-        self.entries = [[] for _ in range(3)]
-        for i in range(3):
-            frame = tk.Frame(root)
-            frame.pack(pady=5)
+# List to store recieve values
+global recieve_val
+global recieve_val_index
+global recieve_val_index_max
 
-            label = tk.Label(frame, text=f"CMD{i + 1}:", font=('Helvetica', 16))
-            label.pack(side=tk.LEFT, padx=5)
-            
-            entry = tk.Entry(frame, font=('Helvetica', 16))
-            entry.pack(side=tk.LEFT, padx=5)
-            self.entries[i].append(entry)
+# List to store input values
+input_val = []
+joined_val = []
+joined_val_index = 0
+joined_val_index_max = 4
 
-            label = tk.Label(frame, text=f"VAL{i + 1}:", font=('Helvetica', 16))
-            label.pack(side=tk.LEFT, padx=5)
-            
-            entry = tk.Entry(frame, font=('Helvetica', 16))
-            entry.pack(side=tk.LEFT, padx=5)
-            self.entries[i].append(entry)
+# List to store recieve values
+recieve_val = [] 
+recieve_val_index = 0
+recieve_val_index_max = 6
 
-            # Create a button to update each number
-            button = tk.Button(root, text=f"Sent Data {i + 1}", command=lambda i=i: self.update_number(i), font=('Helvetica', 16))
-            button.pack(pady=5)
+# Define font for displaying text
+font = cv2.FONT_HERSHEY_SIMPLEX
+font_scale = 0.6
+font_color = (0, 255, 0)  # Green color
+font_thickness = 1
 
-        # Start the updating loop
-        self.update_display()
+# Create windows
+cv2.namedWindow('Values Window')
 
-    def update_display(self):
-        # Get the current time
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        # Update the label with the current time and numbers
-        sent_text = "\n".join(f"Sent Data{i + 1}: {num}" for i, num in enumerate(self.numbers) if num is not None)
-        self.label.config(text=f"{sent_text}\nCurrent time: {current_time}")
-        # Schedule the update_display function to be called again after 1000 ms
-        self.root.after(1000, self.update_display)
+button_states = {"sent data1": False, "sent data2": False, "sent data3": False}  # Button states dictionary
+# Button properties
+buttons = [
+    {"text": "sent data1", "x": 200, "y":  45, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
+    {"text": "sent data2", "x": 200, "y":  75, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
+    {"text": "sent data3", "x": 200, "y": 105, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
+]
 
-    def update_number(self, index):
-        # Update the number from the corresponding entry widgets
-        try:
-            command = int(self.entries[index][0].get())
-            values = int(self.entries[index][1].get())
-            self.numbers[index] = [command, values]
-        except ValueError:
-            # Handle invalid input
-            messagebox.showerror("Error", "One or more entries are not valid numbers.")
+def mouse_callback(event, x, y, flags, param):
+    global button_states
+    if event == cv2.EVENT_LBUTTONDOWN:
+        for button in buttons:
+            if button["x"] <= x <= button["x"] + button["w"] and button["y"] <= y <= button["y"] + button["h"]:
+                button_states[button["text"]] = True
+                print(f"{button['text']} pressed: {button_states[button['text']]}")
+    elif event == cv2.EVENT_LBUTTONUP:
+        for button in buttons:
+            if button["x"] <= x <= button["x"] + button["w"] and button["y"] <= y <= button["y"] + button["h"]:
+                button_states[button["text"]] = False
+                print(f"{button['text']} pressed: {button_states[button['text']]}")     
 
-def ui_main():
-    # Create the main window
-    root = tk.Tk()
-    app = TimeDisplayApp(root)
-    # Start the Tkinter event loop
-    root.mainloop()
+# Set the mouse callback function for the 'Values Window'
+# cv2.setMouseCallback('Values Window', mouse_callback)
+
+def ini_ui():# List to store input values
+    global joined_val
+    global input_val
+    global recieve_val
+
+    for i in range(joined_val_index_max):
+        joined_val.append(0)
+        input_val.append([])
+    for i in range(recieve_val_index_max):
+        recieve_val.append(0)
+
+def cyc_ui():
+    global joined_val_index
+    global recieve_val_index
+    global joined_val
+    global input_val
+    global recieve_val
+
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    y_axis_val = 0
+
+    # Create a black image for the values window
+    value_window = np.zeros((600, 800, 3), dtype=np.uint8)
+
+    # Prepare text to display current values
+    text_time = f"Time: {current_time}"
+    # Put text on the frame
+    y_axis_val += 30
+    cv2.putText(value_window, text_time, (10, y_axis_val), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
+
+    for i in range(joined_val_index_max):
+        y_axis_val += 30
+        if joined_val_index == i:
+            text_input = f"@Input Val: {joined_val[i]}"
+        else:
+            text_input = f" Input Val: {joined_val[i]}"
+        cv2.putText(value_window, text_input, (10, y_axis_val), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
 
 
+    for i in range(recieve_val_index_max):
+        y_axis_val += 30
+        text_receive = f" receive Val: {recieve_val[i]}"
+        cv2.putText(value_window, text_receive, (10, y_axis_val), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
 
+    # # Draw buttons
+    # for button in buttons:
+    #     button_color = button["pressed_color"] if button_states[button["text"]] else button["default_color"]
+    #     # Draw button rectangle
+    #     cv2.rectangle(value_window, (button["x"], button["y"]), (button["x"] + button["w"], button["y"] + button["h"]), button_color, -1)
+    #     # Draw button text
+    #     cv2.putText(value_window, button["text"], (button["x"] + 10, button["y"] + 17), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+
+    # Display the values window
+    cv2.imshow('Values Window', value_window)
+
+    # Handle keyboard input
+    key = cv2.waitKey(1) & 0xFF
+    if key != 0xFF:  # Check if a key is pressed
+        if key == 13:  # Enter key (ASCII 13)
+            input_val[joined_val_index].clear()
+            joined_val[joined_val_index] = 0
+        elif key == 82:
+            if joined_val_index > 0:
+                joined_val_index -= 1
+        elif key == 84:
+            if joined_val_index < joined_val_index_max-1:
+                joined_val_index += 1
+        elif chr(key).isdigit():  # Check if the key is a digit
+            if 5 > len(input_val[joined_val_index]):
+                input_val[joined_val_index].append(chr(key))  # Append the digit to input_val
+                joined_val[joined_val_index] = ''.join(input_val[joined_val_index])
+
+def end_ui():
+    # Release the capture and close windows
+    cv2.destroyAllWindows()
