@@ -14,7 +14,7 @@ def cyc_camera():
         ret, frame = cap.read()
         if ret == True:
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 50, 150)
+            # edges = cv2.Canny(gray, 50, 150)
 
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -29,7 +29,7 @@ def cyc_camera():
             mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
             white_result = cv2.bitwise_and(white_image, white_image, mask=mask)
-            result = cv2.bitwise_and(frame, frame, mask=mask)
+            # result = cv2.bitwise_and(frame, frame, mask=mask)
 
             # Define a kernel for morphological operations
             kernel = np.ones((5, 5), np.uint8)
