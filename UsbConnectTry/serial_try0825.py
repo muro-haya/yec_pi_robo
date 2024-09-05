@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import serial
 import time
 import threading
@@ -8,10 +10,15 @@ BAUD_RATE = 9600
 
 # シリアルポートをオープン
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+ser.flush()
 
 def send_data(message):
     """指定されたメッセージをシリアルポートに送信する"""
-    ser.write(message.encode('utf-8'))
+    ser.flush()
+    print("NG")
+    ser.write(message.encode("utf-8"))
+    print("PASS")
+    # ser.write(message)
     print(f"Sent: {message}")
 
 def receive_data():
