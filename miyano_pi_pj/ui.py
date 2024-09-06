@@ -37,6 +37,9 @@ buttons = [
     # {"text": "sent data3", "x": 200, "y": 105, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
 ]
 
+def set_ui_log():
+    return recieve_val,joined_val
+
 def set_ketboardnum(num):
     global key_log
     if str(num) != key_log:
@@ -80,7 +83,7 @@ def cyc_ui():
     global recieve_val
     global key_log
 
-    recieve_val, _ = serial2SPIKE.get_comm_ui() 
+    recieve_val, _ = serial2SPIKE.set_comm_ui() 
 
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     y_axis_val = 0
@@ -97,16 +100,16 @@ def cyc_ui():
     for i in range(joined_val_index_max):
         y_axis_val += 30
         if joined_val_index == i:
-            text_input = f"@Input Val: {joined_val[i]}"
+            text_input = f"@Input Val{i}: {joined_val[i]}"
         else:
-            text_input = f" Input Val: {joined_val[i]}"
+            text_input = f" Input Val{i}: {joined_val[i]}"
         cv2.putText(value_window, text_input, (10, y_axis_val), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
     y_axis_val = 30
 
     for i in range(recieve_val_index_max):
         y_axis_val += 30
         # print(recieve_val[i])
-        text_receive = f" receive Val: {recieve_val[i]}"
+        text_receive = f" receive Val{i}: {recieve_val[i]}"
         cv2.putText(value_window, text_receive, (200, y_axis_val), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
 
     # Draw buttons

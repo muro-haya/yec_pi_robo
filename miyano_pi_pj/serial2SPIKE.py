@@ -77,7 +77,7 @@ BAUD_RATE = 9600
 # シリアルポートをオープン
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
-def get_comm_ui():
+def set_comm_ui():
     for data_info in rx_datas:
         index = 0
         for cmd in range(600,609):
@@ -157,6 +157,7 @@ def cyc_rx():
                 if cmd == None:
                     continue
                 if int(cmd[i]) == data_info.comm_cmd:
+                    print(int(data[i]))
                     data_info.comm_data = int(data[i])
                     print("inf")
                     print(int(cmd[i]), data_info.comm_data)
