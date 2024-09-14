@@ -6,7 +6,7 @@ import os
 import ui
 
 # csv file name
-csv_file = '/home/robo2/csv_data/data_periodic.csv'
+csv_file = '../csv_data/0914data_periodic_13.csv'
 key_log = False
 interval = 0
 interval_cnt = 0

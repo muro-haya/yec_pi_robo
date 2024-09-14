@@ -54,9 +54,9 @@ rx_datas = [
     CommData(0, 100, 603,  1, received_watch[3]),
     CommData(0, 100, 604,  0, received_watch[4]),
     CommData(0, 100, 605,  0, received_watch[5]),
-    CommData(0, 100, 606,  0, received_watch[6]),
-    CommData(0, 100, 607,  0, received_watch[7]),
-    CommData(0, 100, 608,  0, received_watch[8]),
+    CommData(0, 100, 606,  1, received_watch[6]),
+    CommData(0, 100, 607,  1, received_watch[7]),
+    CommData(0, 100, 608,  1, received_watch[8]),
     CommData(0, 100, 609,  0, received_watch[9]),
 
     CommData(0, 100, 700,  0, received_param[0]),
@@ -84,16 +84,16 @@ def set_comm_ui():
         for cmd in range(600,609):
             if cmd == data_info.comm_cmd:
                 tmp_val = int(data_info.comm_data)
-                print(data_info.comm_cmd)
-                print(data_info.comm_sign)
+                # print(data_info.comm_cmd)
+                # print(data_info.comm_sign)
                 if 0 == data_info.comm_sign:
-                    print("UNSIGN")
+                    # print("UNSIGN")
                     received_watch[index] = tmp_val
                 else:
-                    print(tmp_val)
-                    print("SIGN")
+                    # print(tmp_val)
+                    # print("SIGN")
                     if tmp_val >= 32767:
-                        print("OVER")
+                        # print("OVER")
                         received_watch[index] = tmp_val - 65536
                     else:
                         received_watch[index] = tmp_val
@@ -104,7 +104,7 @@ def set_comm_ui():
             if cmd == data_info.comm_cmd:
                 received_param[index] = int(data_info.comm_data)
             index += 1
-    print(received_watch)
+    # print(received_watch)
     return received_watch, received_param
 
 def input_comm():
@@ -148,6 +148,7 @@ def received_data():
 
 def cyc_tx():
     global comm_rx_cnt
+
     for data in tx_datas:
         if data.comm_cyc == None:
             continue

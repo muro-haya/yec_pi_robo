@@ -7,8 +7,10 @@ DEV_ID = 0
 
 # /dev/video0を指定
 cap = cv2.VideoCapture(DEV_ID)
+n = 0
 
 def cyc_camera():
+    global n
     if( cap.isOpened() ):
         # キャプチャの実施
         ret, frame = cap.read()
@@ -75,6 +77,10 @@ def cyc_camera():
             # cv2.imshow("edge", dilated_image2_red)
             # cv2.imshow("white_mask", white_result_blue)
             # cv2.imshow("white_mask", white_result_red)
+            
+            if cv2.waitKey(1) & 0xff == ord('p'):
+                cv2.imwrite("camera" + str(n) + ".jpg", frame)
+                n += 1
 
     if cv2.waitKey(1) & 0xff == ord('q'):
         return True
