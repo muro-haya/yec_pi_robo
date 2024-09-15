@@ -29,12 +29,12 @@ font_thickness = 1
 # Create windows
 cv2.namedWindow('Values Window')
 
-button_states = {"download": False, "sent data2": False, "sent data3": False}  # Button states dictionary
+button_states = {"download": False, "log": False, "close": False}  # Button states dictionary
 # Button properties
 buttons = [
-    {"text": "download", "x": 20, "y":  350, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0,  0, 255)},
-    # {"text": "sent data2", "x": 200, "y":  75, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
-    # {"text": "sent data3", "x": 200, "y": 105, "w": 120, "h":  20, "default_color": (255,   0,   0), "pressed_color": (  0, 255,   0)},
+    {"text": "download", "x":  20, "y": 350, "w": 120, "h":  25, "default_color": (255,   0,   0), "pressed_color": (  0,  0, 255)},
+    {"text": "log",      "x": 160, "y": 350, "w":  60, "h":  25, "default_color": (255,   0,   0), "pressed_color": (  0,  0, 255)},
+    {"text": "close",    "x": 240, "y": 350, "w":  60, "h":  25, "default_color": (255,   0,   0), "pressed_color": (  0,  0, 255)},
 ]
 
 def set_ui_log():
@@ -53,13 +53,19 @@ def mouse_callback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         for button in buttons:
             if button["x"] <= x <= button["x"] + button["w"] and button["y"] <= y <= button["y"] + button["h"]:
-                button_states[button["text"]] = True
+                if button["text"] == "log":
+                    button_states[button["text"]] ^= True
+                else:
+                    button_states[button["text"]] = True
                 print(f"{button['text']} pressed: {button_states[button['text']]}")
     elif event == cv2.EVENT_LBUTTONUP:
         for button in buttons:
             if button["x"] <= x <= button["x"] + button["w"] and button["y"] <= y <= button["y"] + button["h"]:
-                button_states[button["text"]] = False
-                print(f"{button['text']} pressed: {button_states[button['text']]}")     
+                if button["text"] == "log":
+                    continue
+                else:
+                    button_states[button["text"]] = False
+                    print(f"{button['text']} pressed: {button_states[button['text']]}")     
 
 # Set the mouse callback function for the 'Values Window'
 cv2.setMouseCallback('Values Window', mouse_callback)
@@ -114,7 +120,10 @@ def cyc_ui():
 
     # Draw buttons
     for button in buttons:
-        button_color = button["pressed_color"] if button_states[button["text"]] else button["default_color"]
+        if button_states[button["text"]]:
+            button_color = button["pressed_color"] 
+        else:
+            button_color = button["default_color"] 
         # Draw button rectangle
         cv2.rectangle(value_window, (button["x"], button["y"]), (button["x"] + button["w"], button["y"] + button["h"]), button_color, -1)
         # Draw button text
@@ -168,6 +177,10 @@ def cyc_ui():
     else:
         key_log = '_'
 
+def set_ui_log():
+    return button_states["log"]
+def set_ui_main():
+    return button_states["close"]
 def end_ui():
     # Release the capture and close windows
     cv2.destroyAllWindows()

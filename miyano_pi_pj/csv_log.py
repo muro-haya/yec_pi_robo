@@ -6,7 +6,7 @@ import os
 import ui
 
 # csv file name
-csv_file = '../csv_data/0914data_periodic_13.csv'
+csv_file = '../csv_data/0914data_periodic_14.csv'
 key_log = False
 interval = 0
 interval_cnt = 0
@@ -80,13 +80,7 @@ def cyc_log():
     global key_log
     global interval_cnt
 
-    if keyboard.is_pressed('s'):
-        key_log = True
-        print("Start")
-
-    if keyboard.is_pressed('z'):
-        key_log = False
-        print("End")
+    key_log = ui.set_ui_log()
 
     if key_log:
         if interval < interval_cnt:

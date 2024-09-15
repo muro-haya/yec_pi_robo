@@ -13,8 +13,9 @@ def main():
         serial2SPIKE.cyc_tx() 
         csv_log.cyc_log()
         ui.cyc_ui()
-        end_jdg = camera.cyc_camera()
-        if( True == end_jdg ):
+        camera.cyc_camera()
+        end_jdg = ui.set_ui_main()
+        if True == end_jdg:
            break
 
     camera.end_camera()

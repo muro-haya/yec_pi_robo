@@ -1,10 +1,12 @@
 import serial
 import time
 import threading
+import camera
 
 comm_tx_cnt = 0
 comm_rx_cnt = 0
 g_s32_comm_rx_jdg_red = 0
+g_u16_comm_pet_pos_x = 0
 
 comm_rx_dbg = 0
 
@@ -29,6 +31,7 @@ class CommData:
 tx_datas = [
     CommData(0,  10, 0, 0, lambda: comm_rx_cnt),
     CommData(1,  10, 1, 0, lambda: g_s32_comm_rx_jdg_red),
+    CommData(2,   10, 2, 0, lambda: g_u16_comm_pet_pos_x),
 
     CommData(0, None, 100, 0, lambda: send_param[0]),
     CommData(0, None, 101, 0, lambda: send_param[1]),
@@ -49,11 +52,11 @@ rx_datas = [
     CommData(0, 100, 502,  0, comm_rx_dbg),
 
     CommData(0, 100, 600,  0, received_watch[0]),
-    CommData(0, 100, 601,  0, received_watch[1]),
-    CommData(0, 100, 602,  0, received_watch[2]),
+    CommData(0, 100, 601,  1, received_watch[1]),
+    CommData(0, 100, 602,  1, received_watch[2]),
     CommData(0, 100, 603,  1, received_watch[3]),
-    CommData(0, 100, 604,  0, received_watch[4]),
-    CommData(0, 100, 605,  0, received_watch[5]),
+    CommData(0, 100, 604,  1, received_watch[4]),
+    CommData(0, 100, 605,  1, received_watch[5]),
     CommData(0, 100, 606,  1, received_watch[6]),
     CommData(0, 100, 607,  1, received_watch[7]),
     CommData(0, 100, 608,  1, received_watch[8]),
@@ -84,16 +87,10 @@ def set_comm_ui():
         for cmd in range(600,609):
             if cmd == data_info.comm_cmd:
                 tmp_val = int(data_info.comm_data)
-                # print(data_info.comm_cmd)
-                # print(data_info.comm_sign)
                 if 0 == data_info.comm_sign:
-                    # print("UNSIGN")
                     received_watch[index] = tmp_val
                 else:
-                    # print(tmp_val)
-                    # print("SIGN")
                     if tmp_val >= 32767:
-                        # print("OVER")
                         received_watch[index] = tmp_val - 65536
                     else:
                         received_watch[index] = tmp_val
@@ -104,7 +101,6 @@ def set_comm_ui():
             if cmd == data_info.comm_cmd:
                 received_param[index] = int(data_info.comm_data)
             index += 1
-    # print(received_watch)
     return received_watch, received_param
 
 def input_comm():
@@ -115,7 +111,7 @@ def send_data(command,value):
     message = f"@{command:03d}:{value:06d}\n"
     ser.flush()
     ser.write(message.encode('utf-8'))
-    print(f"Sent: {message}")
+    # print(f"Sent: {message}")
     # 次のタイマーをセット
     # threading.Timer(0.1, send_data, args=(command,value)).start()
 
@@ -148,6 +144,9 @@ def received_data():
 
 def cyc_tx():
     global comm_rx_cnt
+    global g_u16_comm_pet_pos_x
+
+    g_u16_comm_pet_pos_x = camera.set_cam_comm()
 
     for data in tx_datas:
         if data.comm_cyc == None:

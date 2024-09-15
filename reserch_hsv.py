@@ -6,7 +6,7 @@ start_point = None
 end_point = None
 rect_drawn = False
 
-img_path = '/home/robo2/jpg/camera6.jpg'
+img_path = '/home/robo2/jpg/camera20.jpg'
 
 def mouse_callback(event, x, y, flags, param):
     global start_point, end_point, rect_drawn
