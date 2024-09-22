@@ -37,9 +37,6 @@ buttons = [
     {"text": "close",    "x": 240, "y": 350, "w":  60, "h":  25, "default_color": (255,   0,   0), "pressed_color": (  0,  0, 255)},
 ]
 
-def set_ui_log():
-    return recieve_val,joined_val
-
 def set_ketboardnum(num):
     global key_log
     if str(num) != key_log:
@@ -178,6 +175,8 @@ def cyc_ui():
         key_log = '_'
 
 def set_ui_log():
+    return recieve_val,joined_val
+def set_ui_log_btn():
     return button_states["log"]
 def set_ui_main():
     return button_states["close"]

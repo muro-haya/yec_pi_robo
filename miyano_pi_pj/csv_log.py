@@ -6,12 +6,15 @@ import os
 import ui
 
 # csv file name
-csv_file = '../csv_data/0914data_periodic_14.csv'
+csv_file = '../csv_data/0920data_periodic.csv'
 key_log = False
 interval = 0
 interval_cnt = 0
 
 def get_data():
+    recieved_datas=[]
+    input_data=[]
+    print("GET")
     recieved_datas, input_data = ui.set_ui_log()
     return{
         'timestamp'      :time.strftime('%Y-%m-%d %h-:%M:%S'),
@@ -80,7 +83,7 @@ def cyc_log():
     global key_log
     global interval_cnt
 
-    key_log = ui.set_ui_log()
+    key_log = ui.set_ui_log_btn()
 
     if key_log:
         if interval < interval_cnt:

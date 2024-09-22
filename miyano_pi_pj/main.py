@@ -1,5 +1,3 @@
-import threading
-
 import camera
 import serial2SPIKE
 import ui

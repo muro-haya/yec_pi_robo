@@ -7,6 +7,7 @@ comm_tx_cnt = 0
 comm_rx_cnt = 0
 g_s32_comm_rx_jdg_red = 0
 g_u16_comm_pet_pos_x = 0
+g_u16_comm_chase_ebl = 0
 
 comm_rx_dbg = 0
 
@@ -50,16 +51,17 @@ rx_datas = [
     CommData(0, 100, 500,  0, comm_tx_cnt),
     CommData(0, 100, 501,  0, comm_rx_cnt),
     CommData(0, 100, 502,  0, comm_rx_dbg),
+    CommData(0, 100, 503,  0, g_u16_comm_chase_ebl),
 
     CommData(0, 100, 600,  0, received_watch[0]),
-    CommData(0, 100, 601,  1, received_watch[1]),
-    CommData(0, 100, 602,  1, received_watch[2]),
-    CommData(0, 100, 603,  1, received_watch[3]),
-    CommData(0, 100, 604,  1, received_watch[4]),
-    CommData(0, 100, 605,  1, received_watch[5]),
-    CommData(0, 100, 606,  1, received_watch[6]),
-    CommData(0, 100, 607,  1, received_watch[7]),
-    CommData(0, 100, 608,  1, received_watch[8]),
+    CommData(0, 100, 601,  0, received_watch[1]),
+    CommData(0, 100, 602,  0, received_watch[2]),
+    CommData(0, 100, 603,  0, received_watch[3]),
+    CommData(0, 100, 604,  0, received_watch[4]),
+    CommData(0, 100, 605,  0, received_watch[5]),
+    CommData(0, 100, 606,  0, received_watch[6]),
+    CommData(0, 100, 607,  0, received_watch[7]),
+    CommData(0, 100, 608,  0, received_watch[8]),
     CommData(0, 100, 609,  0, received_watch[9]),
 
     CommData(0, 100, 700,  0, received_param[0]),
@@ -84,7 +86,7 @@ ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 def set_comm_ui():
     for data_info in rx_datas:
         index = 0
-        for cmd in range(600,609):
+        for cmd in range(600,610):
             if cmd == data_info.comm_cmd:
                 tmp_val = int(data_info.comm_data)
                 if 0 == data_info.comm_sign:
@@ -97,7 +99,7 @@ def set_comm_ui():
                     
             index += 1
         index = 0
-        for cmd in range(700,709):
+        for cmd in range(700,710):
             if cmd == data_info.comm_cmd:
                 received_param[index] = int(data_info.comm_data)
             index += 1
@@ -111,7 +113,7 @@ def send_data(command,value):
     message = f"@{command:03d}:{value:06d}\n"
     ser.flush()
     ser.write(message.encode('utf-8'))
-    # print(f"Sent: {message}")
+    print(f"Sent: {message}")
     # 次のタイマーをセット
     # threading.Timer(0.1, send_data, args=(command,value)).start()
 
@@ -182,3 +184,7 @@ def cyc_rx():
 
 def close():
     ser.close()  # シリアルポートを閉じる
+
+def set_comm_cam():
+    global g_u16_comm_chase_ebl
+    return g_u16_comm_chase_ebl
