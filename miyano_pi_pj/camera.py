@@ -175,7 +175,12 @@ def cyc_camera():
                 y_rate          = 0
                 processing_time = 0
                 roi_ini         = False
-
+            
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            font_color = (0, 255, 0)  # Green color
+            font_thickness = 1
+            cv2.putText(frame, str(pet_rec_ebl), (10, 30), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
             cv2.imshow("camera", frame)
             # cv2.imshow("edge_bl", dilated_image2_blue)
             # cv2.imshow("edge_re", dilated_image2_red)

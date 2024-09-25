@@ -6,7 +6,7 @@ import os
 import ui
 
 # csv file name
-csv_file = '../csv_data/0920data_periodic.csv'
+csv_file = '../csv_data/0922data3_periodic.csv'
 key_log = False
 interval = 0
 interval_cnt = 0
@@ -17,7 +17,8 @@ def get_data():
     print("GET")
     recieved_datas, input_data = ui.set_ui_log()
     return{
-        'timestamp'      :time.strftime('%Y-%m-%d %h-:%M:%S'),
+        # 'timestamp'      :time.strftime('%Y-%m-%d %H-:%M:%S'),
+        'timestamp'      :time.time(),
 
         'Input val10'    :input_data[0],
         'Input val11'    :input_data[1],

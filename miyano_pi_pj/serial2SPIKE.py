@@ -5,12 +5,15 @@ import camera
 
 comm_tx_cnt = 0
 comm_rx_cnt = 0
-g_s32_comm_rx_jdg_red = 0
-g_u16_comm_pet_pos_x = 0
-g_u16_comm_chase_ebl = 0
+g_s32_comm_rx_jdg_red   = 0
+g_u16_comm_pet_xpos_red = 0
+g_u16_comm_pet_xpos_bl  = 0
+g_u16_comm_pet_flg      = 0
+g_u16_comm_pet_srt      = 0
 
 comm_rx_dbg = 0
 
+received_datas = [0,0,0,0,0,0,0,0,0,0]
 received_param = [0,0,0,0,0,0,0,0,0,0]
 received_watch = [0,0,0,0,0,0,0,0,0,0]
 send_param     = [0,0,0,0,0,0,0,0,0,0]
@@ -30,9 +33,11 @@ class CommData:
         
 # 送信データ
 tx_datas = [
-    CommData(0,  10, 0, 0, lambda: comm_rx_cnt),
-    CommData(1,  10, 1, 0, lambda: g_s32_comm_rx_jdg_red),
-    CommData(2,   10, 2, 0, lambda: g_u16_comm_pet_pos_x),
+    CommData(0,   10,   0, 0, lambda: comm_rx_cnt            ),
+    CommData(1,   10,   1, 0, lambda: g_s32_comm_rx_jdg_red  ),
+    CommData(2,   10,   2, 0, lambda: g_u16_comm_pet_xpos_red),
+    CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_xpos_bl ),
+    CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_flg     ),
 
     CommData(0, None, 100, 0, lambda: send_param[0]),
     CommData(0, None, 101, 0, lambda: send_param[1]),
@@ -48,32 +53,32 @@ tx_datas = [
 
 # 受信データ
 rx_datas = [
-    CommData(0, 100, 500,  0, comm_tx_cnt),
-    CommData(0, 100, 501,  0, comm_rx_cnt),
-    CommData(0, 100, 502,  0, comm_rx_dbg),
-    CommData(0, 100, 503,  0, g_u16_comm_chase_ebl),
+    CommData(0, 100, 500,  0, received_datas[0] ),  # comm_tx_cnt
+    CommData(0, 100, 501,  0, received_datas[1] ),  # comm_rx_cnt
+    CommData(0, 100, 502,  0, received_datas[2] ),  # comm_rx_dbg
+    CommData(0, 100, 503,  0, received_datas[3] ),  # g_u16_comm_pet_srt
 
-    CommData(0, 100, 600,  0, received_watch[0]),
-    CommData(0, 100, 601,  0, received_watch[1]),
-    CommData(0, 100, 602,  0, received_watch[2]),
-    CommData(0, 100, 603,  0, received_watch[3]),
-    CommData(0, 100, 604,  0, received_watch[4]),
-    CommData(0, 100, 605,  0, received_watch[5]),
-    CommData(0, 100, 606,  0, received_watch[6]),
-    CommData(0, 100, 607,  0, received_watch[7]),
-    CommData(0, 100, 608,  0, received_watch[8]),
-    CommData(0, 100, 609,  0, received_watch[9]),
+    CommData(0, 100, 600,  1, received_watch[0]),
+    CommData(0, 100, 601,  1, received_watch[1]),
+    CommData(0, 100, 602,  1, received_watch[2]),
+    CommData(0, 100, 603,  1, received_watch[3]),
+    CommData(0, 100, 604,  1, received_watch[4]),
+    CommData(0, 100, 605,  1, received_watch[5]),
+    CommData(0, 100, 606,  1, received_watch[6]),
+    CommData(0, 100, 607,  1, received_watch[7]),
+    CommData(0, 100, 608,  1, received_watch[8]),
+    CommData(0, 100, 609,  1, received_watch[9]),
 
-    CommData(0, 100, 700,  0, received_param[0]),
-    CommData(0, 100, 701,  0, received_param[1]),
-    CommData(0, 100, 702,  0, received_param[2]),
-    CommData(0, 100, 703,  0, received_param[3]),
-    CommData(0, 100, 704,  0, received_param[4]),
-    CommData(0, 100, 705,  0, received_param[5]),
-    CommData(0, 100, 706,  0, received_param[6]),
-    CommData(0, 100, 707,  0, received_param[7]),
-    CommData(0, 100, 708,  0, received_param[8]),
-    CommData(0, 100, 709,  0, received_param[9])
+    CommData(0, 100, 700,  1, received_param[0]),
+    CommData(0, 100, 701,  1, received_param[1]),
+    CommData(0, 100, 702,  1, received_param[2]),
+    CommData(0, 100, 703,  1, received_param[3]),
+    CommData(0, 100, 704,  1, received_param[4]),
+    CommData(0, 100, 705,  1, received_param[5]),
+    CommData(0, 100, 706,  1, received_param[6]),
+    CommData(0, 100, 707,  1, received_param[7]),
+    CommData(0, 100, 708,  1, received_param[8]),
+    CommData(0, 100, 709,  1, received_param[9])
 ]
 
 # シリアルポートの設定
@@ -84,11 +89,14 @@ BAUD_RATE = 9600
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
 def set_comm_ui():
+    """"
     for data_info in rx_datas:
         index = 0
-        for cmd in range(600,610):
-            if cmd == data_info.comm_cmd:
+        for wa_cmd in range(600,610):
+            if wa_cmd == data_info.comm_cmd:
+                print("OK")
                 tmp_val = int(data_info.comm_data)
+                print(wa_cmd, tmp_val)
                 if 0 == data_info.comm_sign:
                     received_watch[index] = tmp_val
                 else:
@@ -99,11 +107,16 @@ def set_comm_ui():
                     
             index += 1
         index = 0
-        for cmd in range(700,710):
-            if cmd == data_info.comm_cmd:
+        for pr_cmd in range(700,710):
+            if pr_cmd == data_info.comm_cmd:
                 received_param[index] = int(data_info.comm_data)
             index += 1
+        # print(received_watch)
+    """
     return received_watch, received_param
+
+def set_comm_cam():
+    return g_u16_comm_pet_srt
 
 def input_comm():
     return
@@ -146,9 +159,9 @@ def received_data():
 
 def cyc_tx():
     global comm_rx_cnt
-    global g_u16_comm_pet_pos_x
+    global g_u16_comm_pet_xpos_red
 
-    g_u16_comm_pet_pos_x = camera.set_cam_comm()
+    g_u16_comm_pet_xpos_red = camera.set_cam_comm()
 
     for data in tx_datas:
         if data.comm_cyc == None:
@@ -161,30 +174,51 @@ def cyc_tx():
 
 def cyc_rx():
     global rx_datas
+    global comm_tx_cnt
+    global comm_rx_cnt
+    global comm_rx_dbg
+    global g_u16_comm_pet_srt
+    global received_datas
+    global received_param
+    global received_watch
+
     """シリアルポートからデータを受信する"""
     if ser.in_waiting > 0:  # データが待機中かどうかを確認
         cmd, data, buf_num = received_data()
         if buf_num == None:
             return
-        # print(cmd)
-        # print(data)
         for i in range(buf_num):
             for data_info in rx_datas:
-                # print(cmd[i])
-                # print(data_info.comm_cmd)
                 if cmd == None:
                     continue
                 if cmd[i].isdigit():
                     if int(cmd[i]) == data_info.comm_cmd:
-                        # print(int(data[i]))
-                        data_info.comm_data = int(data[i])
-                        # print("inf")
-                        # print(int(cmd[i]), data_info.comm_data)
-                        break
+                        try:
+                            dat = int(cmd[i])
+                            if 600 > dat:
+                                dat -= 500
+                                received_datas[dat] = int(data[i])
+                            elif 700 > dat:
+                                tmp_val = int(data[i])
+                                dat -= 600
+                                if 0 == data_info.comm_sign:
+                                    received_watch[dat] = tmp_val
+                                else:
+                                    if tmp_val >= 32767:
+                                        received_watch[dat] = tmp_val - 65536
+                                    else:
+                                        received_watch[dat] = tmp_val
+                            elif 800 > dat:
+                                dat -= 700
+                                received_param[dat] = int(data[i])
+                            
+                            continue
+                        except(ValueError, TypeError):
+                            continue
+        comm_tx_cnt        = received_datas[0]
+        comm_rx_cnt        = received_datas[1]
+        comm_rx_dbg        = received_datas[2]
+        g_u16_comm_pet_srt = received_datas[3]
 
 def close():
     ser.close()  # シリアルポートを閉じる
-
-def set_comm_cam():
-    global g_u16_comm_chase_ebl
-    return g_u16_comm_chase_ebl
