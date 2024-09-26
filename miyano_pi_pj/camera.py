@@ -23,29 +23,32 @@ x_rate          = 0
 y_rate          = 0
 roi_ini         = False
 track_window = None
+pet_bottle   = 0
 
-def detect_pet(frame, roi_frame, track_window_roi):
+def trace_pet(frame, roi_frame, track_window_roi):
     height, width = roi_frame.shape[:2]
     hsv = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2HSV)
 
     # Create a white image of the same size as the original image
     white_image = np.ones((height, width, 3), dtype=np.uint8) * 255
 
-    mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+    if 1 == pet_bottle:
+        mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+        mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+        mask_img  = mask_red1 | mask_red2
+    else:
+        mask_img  = cv2.inRange(hsv, lower_blue, upper_blue)
 
-    mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
-    mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
-    mask_red  = mask_red1 | mask_red2
 
-    white_result_red  = cv2.bitwise_and(white_image, white_image, mask=mask_red)
+    white_result  = cv2.bitwise_and(white_image, white_image, mask=mask_img)
 
     # Define a kernel for morphological operations
     kernel = np.ones((5, 5), np.uint8)
-    eroded_image_red   = cv2.erode(white_result_red, kernel, iterations=1)      # Apply erosion
-    dilated_image_red  = cv2.dilate(eroded_image_red, kernel, iterations=1)     # Apply dilation
+    eroded_image   = cv2.erode(white_result, kernel, iterations=1)      # Apply erosion
+    dilated_image  = cv2.dilate(eroded_image, kernel, iterations=1)     # Apply dilation
 
     # dilated_image_red = cv2.copyMakeBorder(dilated_image_red,10,10,10,10,cv2.BORDER_CONSTANT,value=0)
-    gray  = cv2.cvtColor(dilated_image_red,cv2.COLOR_BGR2GRAY)
+    gray  = cv2.cvtColor(dilated_image,cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 150)
 
     ret, track_window_roi = cv2.meanShift(edges, track_window_roi, term_crit)
@@ -53,6 +56,27 @@ def detect_pet(frame, roi_frame, track_window_roi):
     # cv2.imshow("ROI", edges)
 
     return track_window_roi
+
+def detect_pet(dec_contours):
+    dec_pet_bottle      = False
+    dec_circularity_old = 1
+    dec_best_contour    = None
+
+    for dec_contour in dec_contours:
+        dec_area = cv2.contourArea(dec_contour)
+        if int(dec_area) < 800:
+            continue
+        perimeter = cv2.arcLength(dec_contour, True)
+        if perimeter == 0:
+            continue
+        dec_circularity = 4 * np.pi * dec_area / (perimeter * perimeter)
+        if dec_circularity < 0.85:
+            if dec_circularity_old > dec_circularity:
+                dec_circularity_old = dec_circularity
+                dec_best_contour    = dec_contour
+                dec_pet_bottle      = True
+
+    return dec_area,dec_best_contour,dec_pet_bottle
 
 def cyc_camera():
     global lower_blue
@@ -68,6 +92,7 @@ def cyc_camera():
     global track_window
     global roi_ini
     global processing_time
+    global pet_bottle
     
     if( cap.isOpened() ):
         # start_time = time.time()
@@ -101,7 +126,7 @@ def cyc_camera():
 
                     roi_frame = frame[int(roi_ys):int(roi_ye), int(roi_xs):int(roi_xe)]
                     track_window_roi = (track_x, track_y, track_w, track_h)
-                    track_window_raw = detect_pet(frame, roi_frame, track_window_roi)
+                    track_window_raw = trace_pet(frame, roi_frame, track_window_roi)
                     track_window = (track_window_raw[0]+xs-track_x, track_window_raw[1]+ys-track_y, track_window_raw[2], track_window_raw[3])
 
                 else:
@@ -135,6 +160,8 @@ def cyc_camera():
                     gray  = cv2.cvtColor(dilated_image_blue,cv2.COLOR_BGR2GRAY)
                     edges = cv2.Canny(gray, 50, 150)
                     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    bl_area,bl_best_contour,bl_bottle = detect_pet(contours)
+
                     # cv2.drawContours(dilated_image_blue, contours, -1, (0,255,0), 2)
                     for contour in contours:
                         epsilon = 0.05 * cv2.arcLength(contour, True)
@@ -145,23 +172,23 @@ def cyc_camera():
                     edges = cv2.Canny(gray, 50, 150)
 
                     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    pet_bottle = False
-                    circularity_old = 1
-                    for contour in contours:
-                        area = cv2.contourArea(contour)
-                        if int(area) < 800:
-                            continue
-                        perimeter = cv2.arcLength(contour, True)
-                        if perimeter == 0:
-                            continue
-                        circularity = 4 * np.pi * area / (perimeter * perimeter)
-                        if circularity < 0.85:
-                            if circularity_old > circularity:
-                                circularity_old = circularity
-                                best_contour = contour
-                                pet_bottle = True
-                    if  pet_bottle == True:
-                        x, y, w, h = cv2.boundingRect(best_contour)
+                    red_area,red_best_contour,red_bottle = detect_pet(contours)
+
+                    pet_bottle = 0
+                    if  red_bottle == True & bl_bottle == False:
+                        x, y, w, h = cv2.boundingRect(red_best_contour)
+                        pet_bottle = 1
+                    elif  red_bottle == False & bl_bottle == True:
+                        x, y, w, h = cv2.boundingRect(bl_best_contour)
+                        pet_bottle = 2
+                    elif red_bottle == True & bl_bottle == True:
+                        if bl_area < red_area:
+                            x, y, w, h = cv2.boundingRect(red_best_contour)
+                            pet_bottle = 1
+                        else:
+                            x, y, w, h = cv2.boundingRect(bl_best_contour)
+                            pet_bottle = 2
+                    if 0 != pet_bottle:
                         track_window = (x, y, w, h)
                         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
