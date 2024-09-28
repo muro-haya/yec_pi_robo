@@ -37,7 +37,7 @@ tx_datas = [
     CommData(1,   10,   1, 0, lambda: g_s32_comm_rx_jdg_red  ),
     CommData(2,   10,   2, 0, lambda: g_u16_comm_pet_xpos    ),
     CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_xpos_bl ),
-    CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_flg     ), # pet bottole(0:None 1:red :blue)
+    CommData(2,   10,   4, 0, lambda: g_u16_comm_pet_flg     ), # pet bottole(0:None 1:red :blue)
 
     CommData(0, None, 100, 0, lambda: send_param[0]),
     CommData(0, None, 101, 0, lambda: send_param[1]),
@@ -85,8 +85,6 @@ rx_datas = [
 SERIAL_PORT = '/dev/ttyACM0'
 BAUD_RATE = 9600
 
-# シリアルポートをオープン
-ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
 def set_comm_ui():
     return received_watch, received_param
@@ -97,11 +95,37 @@ def set_comm_cam():
 def input_comm():
     return
 
+def serial_init():
+    global ser
+    try:
+        # シリアルポートをオープン
+        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+        return True
+    except serial.SerialException as e:
+        print("NONE")
+        return False
+
+def serial_reset():
+    try:
+        print("ERR")
+        ser.close()
+        time.sleep(1)
+        ser.open()
+    except serial.SerialException as e:
+        print("OH,NO")
+
 def send_data(command,value):
     """指定されたメッセージをシリアルポートに送信する"""
     message = f"@{command:03d}:{value:06d}\n"
     ser.flush()
-    ser.write(message.encode('utf-8'))
+    try:
+        ser.write(message.encode('utf-8'))
+    except serial.SerialTimeoutException:
+        serial_reset()
+    except serial.SerialException as e:
+        serial_reset()
+    except Exception:
+        serial_reset()
     print(f"Sent: {message}")
     # 次のタイマーをセット
     # threading.Timer(0.1, send_data, args=(command,value)).start()
@@ -109,7 +133,15 @@ def send_data(command,value):
 def received_data():
     received_cmd_buff.clear()
     received_data_buff.clear()
-    data = ser.read(ser.in_waiting).decode('utf-8').strip()
+    ser.flush()
+    try:
+        data = ser.read(ser.in_waiting).decode('utf-8').strip()
+    except serial.SerialTimeoutException:
+        serial_reset()
+    except serial.SerialException as e:
+        serial_reset()
+    except Exception:
+        serial_reset()
     if data:
         print(f"Received: {data}")
         # split '@'
@@ -136,6 +168,7 @@ def received_data():
 def cyc_tx():
     global comm_rx_cnt
     global g_u16_comm_pet_xpos
+    global g_u16_comm_pet_flg
 
     g_u16_comm_pet_xpos,g_u16_comm_pet_flg = camera.set_cam_comm()
 
@@ -159,7 +192,12 @@ def cyc_rx():
     global received_watch
 
     """シリアルポートからデータを受信する"""
-    if ser.in_waiting > 0:  # データが待機中かどうかを確認
+    try:
+        ser_wait = ser.in_waiting
+    except serial.SerialException as e:
+        serial_reset()
+        ser_wait = 0
+    if ser_wait > 0:  # データが待機中かどうかを確認
         cmd, data, buf_num = received_data()
         if buf_num == None:
             return

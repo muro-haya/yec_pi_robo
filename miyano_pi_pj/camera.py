@@ -87,7 +87,7 @@ def detect_pet(dec_contours, binary_img):
 
     for dec_contour in dec_contours:
         dec_area = int(cv2.contourArea(dec_contour))
-        if dec_area < 1000:
+        if dec_area < 500:
             continue
         x, y, w, h = cv2.boundingRect(dec_contour)
         roi = binary_img[y:y+h, x:x+w]
