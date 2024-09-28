@@ -1,6 +1,5 @@
 import serial
 import time
-import threading
 import camera
 
 comm_tx_cnt = 0
@@ -117,7 +116,7 @@ def serial_reset():
 def send_data(command,value):
     """指定されたメッセージをシリアルポートに送信する"""
     message = f"@{command:03d}:{value:06d}\n"
-    ser.flush()
+    # ser.flush()
     try:
         ser.write(message.encode('utf-8'))
     except serial.SerialTimeoutException:
@@ -133,7 +132,7 @@ def send_data(command,value):
 def received_data():
     received_cmd_buff.clear()
     received_data_buff.clear()
-    ser.flush()
+    # ser.flush()
     try:
         data = ser.read(ser.in_waiting).decode('utf-8').strip()
     except serial.SerialTimeoutException:
