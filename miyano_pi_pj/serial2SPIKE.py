@@ -6,7 +6,7 @@ import camera
 comm_tx_cnt = 0
 comm_rx_cnt = 0
 g_s32_comm_rx_jdg_red   = 0
-g_u16_comm_pet_xpos_red = 0
+g_u16_comm_pet_xpos = 0
 g_u16_comm_pet_xpos_bl  = 0
 g_u16_comm_pet_flg      = 0
 g_u16_comm_pet_srt      = 0
@@ -35,9 +35,9 @@ class CommData:
 tx_datas = [
     CommData(0,   10,   0, 0, lambda: comm_rx_cnt            ),
     CommData(1,   10,   1, 0, lambda: g_s32_comm_rx_jdg_red  ),
-    CommData(2,   10,   2, 0, lambda: g_u16_comm_pet_xpos_red),
+    CommData(2,   10,   2, 0, lambda: g_u16_comm_pet_xpos    ),
     CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_xpos_bl ),
-    CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_flg     ),
+    CommData(2,   10,   3, 0, lambda: g_u16_comm_pet_flg     ), # pet bottole(0:None 1:red :blue)
 
     CommData(0, None, 100, 0, lambda: send_param[0]),
     CommData(0, None, 101, 0, lambda: send_param[1]),
@@ -89,30 +89,6 @@ BAUD_RATE = 9600
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
 def set_comm_ui():
-    """"
-    for data_info in rx_datas:
-        index = 0
-        for wa_cmd in range(600,610):
-            if wa_cmd == data_info.comm_cmd:
-                print("OK")
-                tmp_val = int(data_info.comm_data)
-                print(wa_cmd, tmp_val)
-                if 0 == data_info.comm_sign:
-                    received_watch[index] = tmp_val
-                else:
-                    if tmp_val >= 32767:
-                        received_watch[index] = tmp_val - 65536
-                    else:
-                        received_watch[index] = tmp_val
-                    
-            index += 1
-        index = 0
-        for pr_cmd in range(700,710):
-            if pr_cmd == data_info.comm_cmd:
-                received_param[index] = int(data_info.comm_data)
-            index += 1
-        # print(received_watch)
-    """
     return received_watch, received_param
 
 def set_comm_cam():
@@ -159,9 +135,9 @@ def received_data():
 
 def cyc_tx():
     global comm_rx_cnt
-    global g_u16_comm_pet_xpos_red
+    global g_u16_comm_pet_xpos
 
-    g_u16_comm_pet_xpos_red = camera.set_cam_comm()
+    g_u16_comm_pet_xpos,g_u16_comm_pet_flg = camera.set_cam_comm()
 
     for data in tx_datas:
         if data.comm_cyc == None:
