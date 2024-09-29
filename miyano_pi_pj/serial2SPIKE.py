@@ -12,6 +12,8 @@ g_u16_comm_pet_srt      = 0
 
 comm_rx_dbg = 0
 
+received_cnt = 0
+
 received_datas = [0,0,0,0,0,0,0,0,0,0]
 received_param = [0,0,0,0,0,0,0,0,0,0]
 received_watch = [0,0,0,0,0,0,0,0,0,0]
@@ -108,12 +110,13 @@ def serial_reset():
     try:
         print("ERR")
         ser.close()
-        time.sleep(1)
+        time.sleep(0.3)
         ser.open()
     except serial.SerialException as e:
         print("OH,NO")
 
 def send_data(command,value):
+
     """指定されたメッセージをシリアルポートに送信する"""
     message = f"@{command:03d}:{value:06d}\n"
     # ser.flush()
@@ -130,9 +133,11 @@ def send_data(command,value):
     # threading.Timer(0.1, send_data, args=(command,value)).start()
 
 def received_data():
+
     received_cmd_buff.clear()
     received_data_buff.clear()
     # ser.flush()
+
     try:
         data = ser.read(ser.in_waiting).decode('utf-8').strip()
     except serial.SerialTimeoutException:
@@ -142,6 +147,7 @@ def received_data():
     except Exception:
         serial_reset()
     if data:
+        received_cnt = 0
         print(f"Received: {data}")
         # split '@'
         if '@' in data:
@@ -160,11 +166,14 @@ def received_data():
                 # print(cmd, value)
             else:
                 print("Input string must contain ':' after'@'")
+                serial_reset()
                 return None,None,None
         return received_cmd_buff,received_data_buff,buffer_num
     return None,None,None
 
 def cyc_tx():
+    global received_cnt
+
     global comm_rx_cnt
     global g_u16_comm_pet_xpos
     global g_u16_comm_pet_flg
@@ -179,6 +188,14 @@ def cyc_tx():
             data.comm_cnt = 0
         data.comm_cnt += 1
     comm_rx_cnt += 1
+
+    if 500 < received_cnt:
+        print("RESET")
+        received_cnt = 0
+        return True
+    else:
+        received_cnt += 1
+        return False
 
 def cyc_rx():
     global rx_datas
