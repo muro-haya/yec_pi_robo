@@ -39,7 +39,6 @@ def trace_pet(frame, roi_frame, track_window_roi):
     else:
         mask_img  = cv2.inRange(hsv, lower_blue, upper_blue)
 
-
     white_result  = cv2.bitwise_and(white_image, white_image, mask=mask_img)
 
     # Define a kernel for morphological operations
@@ -56,7 +55,18 @@ def trace_pet(frame, roi_frame, track_window_roi):
     gray  = cv2.cvtColor(dilated_image,cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 150)
 
-    ret, track_window_roi = cv2.meanShift(edges, track_window_roi, term_crit)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    bestw = 0
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if bestw < w:
+            bestw = w
+            track_window_roi = (x, y, w, h)
+
+    # ret, track_window_roi = cv2.meanShift(edges, track_window_roi, term_crit)
+    # print(x, y, w, h)
+    # print(track_window_roi)
 
     # cv2.imshow("ROI", edges)
 
@@ -64,20 +74,25 @@ def trace_pet(frame, roi_frame, track_window_roi):
 
 def mask_pet(white_image,kernel,mask_img,frame):
     mask_result        = cv2.bitwise_and(white_image, white_image, mask=mask_img)
-    mask_result_color  = cv2.bitwise_and(frame, frame, mask=mask_img)
+    # mask_result_color  = cv2.bitwise_and(frame, frame, mask=mask_img)
 
-    gray  = cv2.cvtColor(mask_result_color,cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 10, 80)
+    # gray  = cv2.cvtColor(mask_result_color,cv2.COLOR_BGR2GRAY)
+    # edges = cv2.Canny(gray, 10, 80)
 
-    edges_not = cv2.bitwise_not(edges)
-    edge_result_red  = cv2.bitwise_and(mask_result, mask_result, mask=edges_not)
+    # edges_not = cv2.bitwise_not(edges)
+    # edge_result_red  = cv2.bitwise_and(mask_result, mask_result, mask=edges_not)
                 
-    erode_result_red  = cv2.erode(edge_result_red, kernel, iterations=1)     # Apply erosion
+    # erode_result_red  = cv2.erode(edge_result_red, kernel, iterations=1)     # Apply erosion
 
-    edges_contours = cv2.Canny(erode_result_red, 10, 80)
+    # edges_contours = cv2.Canny(erode_result_red, 10, 80)
+    # contours, _ = cv2.findContours(edges_contours, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    mask_result  = cv2.erode(mask_result, kernel, iterations=1)     # Apply erosion
+    edges_contours = cv2.Canny(mask_result, 10, 80)
     contours, _ = cv2.findContours(edges_contours, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
 
-    return   contours,erode_result_red
+    # return   contours,erode_result_red
+    return   contours,mask_result
 
 def detect_pet(dec_contours, binary_img):
     white_rate_old   = 0
@@ -85,18 +100,23 @@ def detect_pet(dec_contours, binary_img):
     dec_best_contour = None
     dec_pet_bottle   = False
 
+    _,width,_ = binary_img.shape
+
     for dec_contour in dec_contours:
         dec_area = int(cv2.contourArea(dec_contour))
         if dec_area < 500:
             continue
         x, y, w, h = cv2.boundingRect(dec_contour)
         roi = binary_img[y:y+h, x:x+w]
-        cv2.imshow("roi",roi)
         white_area = np.sum(roi == 255)
         white_rate = white_area/roi.size
+        x_rate_raw = (x+w/2)/width
         if white_rate < 0.4:
             continue
+        if x_rate_raw < 0.2 or x_rate_raw > 0.8:
+            continue
         if white_rate_old < white_rate:
+            cv2.imshow("roi",roi)
             white_rate_old   = white_rate
             dec_best_contour = dec_contour
             dec_pet_bottle   = True
@@ -176,8 +196,12 @@ def cyc_camera():
                     blue_contours,bluebinary = mask_pet(white_image,kernel,mask_blue,frame)
                     blue_area,blue_best_contour,blue_bottle = detect_pet(blue_contours,bluebinary)
 
+                    # cv2.imshow("bl_mask",bluebinary)
+
                     red_contours,red_binary = mask_pet(white_image,kernel,mask_red,frame)
                     red_area,red_best_contour,red_bottle = detect_pet(red_contours,red_binary)
+
+                    # cv2.imshow("rd_mask",red_binary)
 
                     pet_bottle = 0
                     if  red_bottle == True and blue_bottle == False:
