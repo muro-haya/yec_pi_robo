@@ -27,6 +27,8 @@ pet_bottle   = 0
 
 def trace_pet(frame, roi_frame, track_window_roi):
     height, width = roi_frame.shape[:2]
+    if roi_frame is None:
+        return None
     hsv = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2HSV)
 
     # Create a white image of the same size as the original image
